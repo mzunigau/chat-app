@@ -6,12 +6,13 @@
 
         <ul class="nav nav-pills card-header-pills">
             <li class="nav-item me-2">
-                <button class="btn btn-success" type="button">Conectar</button>
+                <button class="btn btn-success" type="button" (click)="conectar()" *ngIf="!conectado">Conectar</button>
 
             </li>
 
             <li class="nav-item">
-                <button class="btn btn-warning" type="button">Cerrar Chat</button>
+                <button class="btn btn-warning" type="button" (click)="desconectar()" *ngIf="conectado">Cerrar
+                    Chat</button>
             </li>
         </ul>
 
@@ -21,14 +22,14 @@
 
     <!-- Body -->
 
-    <div class="card-body" style="overflow-y: scroll; height: 360px;">
+    <div class="card-body" style="overflow-y: scroll; height: 360px;" *ngIf="conectado">
 
     </div>
 
 
     <!-- Footer -->
 
-    <div class="card-footer">
+    <div class="card-footer" *ngIf="conectado">
         <form>
             <div class="row">
                 <div class="col">
