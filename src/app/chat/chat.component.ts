@@ -16,7 +16,14 @@ export class ChatComponent implements OnInit {
 
   mensajes: Mensaje[] = [];
 
-  constructor() {}
+  escribiendo: string;
+
+  clienteId: string;
+
+  constructor() {
+    this.clienteId =
+      'id-' + new Date().getTime() + '-' + Math.random().toString(36).substr(2);
+  }
 
   ngOnInit(): void {
     this.client = new Client();
@@ -28,17 +35,59 @@ export class ChatComponent implements OnInit {
       console.log('Conectados: ' + this.client.connected + ':' + frame);
       this.conectado = true;
 
+      // Escucha al broker en caso de nuevos mensajes
       this.client.subscribe('/chat/mensaje', (e) => {
         let mensaje: Mensaje = JSON.parse(e.body) as Mensaje;
         mensaje.fecha = new Date(mensaje.fecha);
+
+        // Verificar que el usuario es nuevo para asignarle un color desde el backend
+        if (
+          !this.mensaje.color &&
+          mensaje.tipo == 'NUEVO_USUARIO' &&
+          this.mensaje.username == mensaje.username
+        ) {
+          this.mensaje.color = mensaje.color;
+        }
         this.mensajes.push(mensaje);
         console.log(mensaje);
+      });
+
+      //Escucha al broker en caso de que alguien escriba
+      this.client.subscribe('/chat/escribiendo', (e) => {
+        this.escribiendo = e.body;
+        setTimeout(() => (this.escribiendo = ''), 3000);
+      });
+
+      console.log(this.clienteId);
+
+      //Obtener unos mensajes historial
+      this.client.subscribe('/chat/historial/' + this.clienteId, (e) => {
+        const historial = JSON.parse(e.body) as Mensaje[];
+        this.mensajes = historial
+          .map((m) => {
+            m.fecha = new Date(m.fecha);
+            return m;
+          })
+          .reverse();
+      });
+
+      this.client.publish({
+        destination: '/app/historial',
+        body: this.clienteId,
+      });
+
+      this.mensaje.tipo = 'NUEVO_USUARIO';
+      this.client.publish({
+        destination: '/app/mensaje',
+        body: JSON.stringify(this.mensaje),
       });
     };
 
     this.client.onDisconnect = (frame) => {
       console.log('Desconectados: ' + !this.client.connected + ':' + frame);
       this.conectado = false;
+      this.mensaje = new Mensaje();
+      this.mensajes = [];
     };
   }
 
@@ -51,10 +100,18 @@ export class ChatComponent implements OnInit {
   }
 
   enviarMensaje(): void {
+    this.mensaje.tipo = 'MENSAJE';
     this.client.publish({
       destination: '/app/mensaje',
       body: JSON.stringify(this.mensaje),
     });
     this.mensaje.texto = '';
+  }
+
+  escribiendoEvento(): void {
+    this.client.publish({
+      destination: '/app/escribiendo',
+      body: this.mensaje.username,
+    });
   }
 }

@@ -5,13 +5,18 @@
     <div class="card-header">
 
         <ul class="nav nav-pills card-header-pills">
-            <li class="nav-item me-2">
-                <button class="btn btn-success" type="button" (click)="conectar()" *ngIf="!conectado">Conectar</button>
+            <li class="nav-item me-2" *ngIf="!conectado">
+                <input type="text" class="form-control" placeholder="Nombre de usuario" name="username" [(ngModel)]="mensaje.username">
 
             </li>
 
-            <li class="nav-item">
-                <button class="btn btn-warning" type="button" (click)="desconectar()" *ngIf="conectado">Cerrar
+            <li class="nav-item me-2" *ngIf="!conectado">
+                <button class="btn btn-success" type="button" (click)="conectar()" [disabled]="!mensaje.username">Conectar</button>
+
+            </li>
+
+            <li class="nav-item" *ngIf="conectado">
+                <button class="btn btn-warning" type="button" (click)="desconectar()">Cerrar
                     Chat</button>
             </li>
         </ul>
@@ -22,10 +27,14 @@
 
     <!-- Body -->
 
-    <div class="card-body" style="overflow-y: scroll; height: 360px;" *ngIf="conectado">
+    <div #scrollChat [scrollTop]="scrollChat.scrollHeight" class="card-body" style="overflow-y: scroll; height: 360px;" *ngIf="conectado">
         <ul class="list-group list-group-flush">
             <li class="list-group-item list-group-item-light" *ngFor="let mensaje of mensajes">
-                {{mensaje.fecha | date:'shortTime'}} {{mensaje.texto}}
+                <span *ngIf="mensaje.tipo=='NUEVO_USUARIO'">{{mensaje.fecha | date:'shortTime'}}
+                    {{mensaje.texto}} <span [ngStyle]="{'color': mensaje.color}"><strong>{{mensaje.username}}:</strong>
+                    </span></span>
+                <span *ngIf="mensaje.tipo=='MENSAJE'">{{mensaje.fecha | date:'shortTime'}} <span
+                        [ngStyle]="{'color': mensaje.color}"><strong> {{mensaje.username}}:</strong> </span> {{mensaje.texto}} </span>
             </li>
         </ul>
 
@@ -38,11 +47,16 @@
         <form>
             <div class="row">
                 <div class="col">
-                    <input type="text" class="form-control" placeholder="Escribe un mensaje..." name="texto" [(ngModel)]="mensaje.texto">
+                    <input type="text" class="form-control" placeholder="Escribe un mensaje..." name="texto" [(ngModel)]="mensaje.texto" (keyup)="escribiendoEvento()">
                 </div>
                 <div class="col">
                     <button class="btn btn-primary" type="submit" (click)="enviarMensaje()">Enviar</button>
                 </div>
+
+            </div>
+
+            <div class="row">
+                <div class="col">{{escribiendo}}</div>
             </div>
         </form>
 
